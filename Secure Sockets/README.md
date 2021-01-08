@@ -6,7 +6,7 @@ Now we need to make the MQTT server use secure sockets. We do this from a termin
 ```
 sudo apt-get install openssl
 ```
-We might not have to do this, may be already installed - in which case we get told so by the installer.
+We might not have to do this, it may be already installed - in which case we get told so by the installer.
 ## Make the certificate authority key
 The certificate authority key is the daddy of our security. We are going to make a *self signed* key which we can use to create keys that can be used to encrypt conversations. Keys made from this key can't be used to authenticate an https site. If you want a "proper" certificate authority key that can be used to both encrpyt messages and authenticate hosts you should take a look at Let's Encrypt which you can find [here](https://letsencrypt.org/getting-started/).
 ```
@@ -141,8 +141,37 @@ sudo /etc/init.d/mosquitto restart
 ```
 # Client
 Now we have to modify our client devices to support the use of secure sockets. 
-## Arduino
-I use pubsubclient to make MQTT connections in Arduino C++ programs. You can find it [here](https://github.com/knolleary/pubsubclient). To make this work over secure sockets I have to ask it to use a 
+## Arduino ESP32 and ESP8266
+The WiFi libaries for these devices are similar, but not quite the same. I use the following to grab the right libaries for each:
+```
+#if defined(ARDUINO_ARCH_ESP32)
+
+#include <Arduino.h>
+#include <WiFi.h>
+#include <DNSServer.h>
+#include <WiFiUdp.h>
+#include <WiFiServer.h>
+#include <WiFiClient.h>
+#include <WiFiClientSecure.h>
+#include <HTTPUpdate.h>
+#include <WebServer.h>
+
+#endif
+
+#if defined(ARDUINO_ARCH_ESP8266)
+
+#include <Arduino.h>
+#include <ESP8266WiFi.h>
+#include <WiFiClientSecure.h>
+#include <ESP8266httpUpdate.h>
+#include <ESP8266WebServer.h>
+
+#endif
+```
+Using this at the start of your program means that your C++ code can be mostly the same for both platforms. 
+
+I use pubsubclient to make MQTT connections in Arduino C++ programs. You can find it [here](https://github.com/knolleary/pubsubclient). To make this work over secure sockets I have to ask it to use a secure socket.
+
 ```
 PubSubClient *mqttPubSubClient = NULL;
 
@@ -170,5 +199,30 @@ if (mqttPubSubClient == NULL)
 	mqttPubSubClient->setCallback(callback);
 }
 ```
-Note the extra line to explicitly set insecure mode when using the ESP8266 device. This means that the SSL will work with self-signed certificates like outs. The ESP32 has this option set by default. 
-
+Note the extra line to explicitly set insecure mode when using the ESP8266 device. This means that the SSL will work with self-signed certificates like ours. The ESP32 has this option set by default. This means that our connection will be encrypted but that the client will not validate the identity of the server.  
+## MicroPython
+If you want to use secure sockets with MicroPython you seem to have to download a certificate file into your device for it to use when it makes a connection. This makes the connection more secure, but it is much harder to use. 
+```
+def connectMQTT():
+    from umqtt.simple import MQTTClient
+    CERT_PATH = "certificate.cer"
+    print('getting cert')
+    with open(CERT_PATH, 'r') as f:
+        cert = f.read()
+    print('got cert')
+    sslparams = {'cert':cert}
+    CLIENT_ID='MicroPythonTest'
+    Username='username here'
+    Password='password here'
+    mqtt=MQTTClient(client_id=CLIENT_ID,server='server here',port=8883,user=Username,password=Password, keepalive=4000, ssl=True, ssl_params=sslparams)
+    mqtt.set_callback(callback)
+    mqtt.connect(False)
+    mqtt.subscribe('some topic')
+    return mqtt
+```
+The function above reads a certificate file and then adds this into the client connection to build an mqtt connection client you can use in your MicroPython program. 
+To make a certificate file you use this command on your server, in the same folder where your other certificate files are stored:
+```
+openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out certificate.cer -days 360
+```
+Then copy the certificate.cer file onto your microPython device to use in the connection. I use the program Thonny to connect to my MicroPython devices and transfer files into them. You can find this program [here](https://thonny.org/)

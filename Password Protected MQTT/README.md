@@ -33,7 +33,7 @@ I use pubsubclient to make MQTT connections in Arduino C++ programs. You can fin
 mqttPubSubClient->connect(mqttSettings.mqttDeviceName, mqttSettings.mqttUser, mqttSettings.mqttPassword)
 ```
 In the call of the connect function you give the name your device will have on the broker, the username and the password.
-### Micro Python
+### MicroPython
 I use the umqttrobust library you can find [here](https://github.com/micropython/micropython-lib/tree/master/umqtt.robust): You specify the username and password when you connect:
 ```
 from umqtt.robust import MQTTClient
