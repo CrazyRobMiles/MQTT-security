@@ -200,29 +200,3 @@ if (mqttPubSubClient == NULL)
 }
 ```
 Note the extra line to explicitly set insecure mode when using the ESP8266 device. This means that the SSL will work with self-signed certificates like ours. The ESP32 has this option set by default. This means that our connection will be encrypted but that the client will not validate the identity of the server.  
-## MicroPython
-If you want to use secure sockets with MicroPython you need to download a certificate file into your device for it to use when it makes a connection. This makes the connection more secure (the client cannot be spoofed into connecting to the wrong host), but it is a bit harder to set up. 
-```
-def connectMQTT():
-    from umqtt.simple import MQTTClient
-    CERT_PATH = "certificate.cer"
-    print('getting cert')
-    with open(CERT_PATH, 'r') as f:
-        cert = f.read()
-    print('got cert')
-    sslparams = {'cert':cert}
-    CLIENT_ID='MicroPythonTest'
-    Username='username here'
-    Password='password here'
-    mqtt=MQTTClient(client_id=CLIENT_ID,server='server here',port=8883,user=Username,password=Password, keepalive=4000, ssl=True, ssl_params=sslparams)
-    mqtt.set_callback(callback)
-    mqtt.connect(False)
-    mqtt.subscribe('some topic')
-    return mqtt
-```
-The function above reads a certificate file and then adds this into the client connection to build an mqtt connection client you can use in your MicroPython program. 
-To make a certificate file you use this command on your server, in the same folder where your other certificate files are stored:
-```
-openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out certificate.cer -days 360
-```
-Then copy the certificate.cer file onto your microPython device to use in the connection. I use the program Thonny to connect to my MicroPython devices and transfer files into them. You can find this program [here](https://thonny.org/)
