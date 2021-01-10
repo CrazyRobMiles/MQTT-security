@@ -1,0 +1,1 @@
+An Arduino client for MQTT which supports password protection and Secure Sockets. The client will work with either ESP8266 or ESP32 devices. The file config.h selects the correct includes for the platform.

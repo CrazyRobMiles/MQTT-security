@@ -1,6 +1,6 @@
 # Secure sockets with MQTT
 
-Now we need to make the MQTT server use secure sockets. We do this from a terminal connection. We are going to create some key files and add them to our Mosqitto installation. Then we are going to edit the configuration file of the MQTT broker to tell it to use these certificates to encrypt connections to remote devices. 
+We can confuigure an MQTT server use secure sockets. We do this from a terminal connection. We are going to create some key files and add them to our Mosqitto installation. Then we are going to edit the configuration file of the MQTT broker to tell it to use these certificates to encrypt connections to remote devices. 
 ## Install openssl
  First we need openssl to make the broker certificates and keys:
 ```
@@ -201,7 +201,7 @@ if (mqttPubSubClient == NULL)
 ```
 Note the extra line to explicitly set insecure mode when using the ESP8266 device. This means that the SSL will work with self-signed certificates like ours. The ESP32 has this option set by default. This means that our connection will be encrypted but that the client will not validate the identity of the server.  
 ## MicroPython
-If you want to use secure sockets with MicroPython you seem to have to download a certificate file into your device for it to use when it makes a connection. This makes the connection more secure, but it is much harder to use. 
+If you want to use secure sockets with MicroPython you need to download a certificate file into your device for it to use when it makes a connection. This makes the connection more secure (the client cannot be spoofed into connecting to the wrong host), but it is a bit harder to set up. 
 ```
 def connectMQTT():
     from umqtt.simple import MQTTClient
